@@ -13,7 +13,7 @@ public class Sintoma {
     private String nombre;
 
     @Field("valores")
-    private List<ValorSintoma> valores;
+    private List<String> valores;
 
     @Field("tiene_escala")
     private Boolean tieneEscala;
@@ -40,11 +40,11 @@ public class Sintoma {
         this.nombre = nombre;
     }
 
-    public List<ValorSintoma> getValores() {
+    public List<String> getValores() {
         return valores;
     }
 
-    public void setValores(List<ValorSintoma> valores) {
+    public void setValores(List<String> valores) {
         this.valores = valores;
     }
 
@@ -72,28 +72,4 @@ public class Sintoma {
         this.esPredeterminado = esPredeterminado;
     }
 
-}
-
-class ValorSintoma {
-    @Field("id_valor")
-    private String idValor;
-
-    @Field("nombre")
-    private String nombre;
-
-    public String getIdValor() {
-        return idValor;
-    }
-
-    public void setIdValor(String idValor) {
-        this.idValor = idValor;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
 }

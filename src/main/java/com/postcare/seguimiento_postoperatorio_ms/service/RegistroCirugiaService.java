@@ -5,11 +5,13 @@ import com.postcare.seguimiento_postoperatorio_ms.repository.RegistroDePacienteR
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
-public class RegistroDePacienteService {
+public class RegistroCirugiaService {
 
     @Autowired
     private RegistroDePacienteRepository pacienteRepository;
@@ -23,7 +25,14 @@ public class RegistroDePacienteService {
                     nuevoPaciente.setId(idPaciente);
                     return nuevoPaciente;
                 });
+        // Verificar si existe el arreglo de cirugias
+        if (paciente.getCirugias() == null) {
+            paciente.setCirugias(new ArrayList<>());
+        }
 
+        if (registroCirugia.getId() == null || registroCirugia.getId().isEmpty()) {
+            registroCirugia.setId(UUID.randomUUID().toString());
+        }
         paciente.getCirugias().add(registroCirugia);
         return pacienteRepository.save(paciente);
     }
