@@ -14,13 +14,13 @@ public class RegistroDePaciente {
     @Id
     private String id;
 
-    @Field("nombre_paciente")
-    private String nombrePaciente;
 
     @Field("en_recuperacion")
     private boolean enRecuperacion;
 
     private List<Cirugia> cirugias;
+
+    private List<Registro> registros;
 
     // Getters y Setters
     public String getId() {
@@ -29,14 +29,6 @@ public class RegistroDePaciente {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getNombrePaciente() {
-        return nombrePaciente;
-    }
-
-    public void setNombrePaciente(String nombrePaciente) {
-        this.nombrePaciente = nombrePaciente;
     }
 
     public boolean isEnRecuperacion() {
@@ -55,46 +47,57 @@ public class RegistroDePaciente {
         this.cirugias = cirugias;
     }
 
-    @Override
-    public String toString() {
-        return "RegistroDePaciente{" +
-                "id='" + id + '\'' +
-                ", nombrePaciente='" + nombrePaciente + '\'' +
-                ", enRecuperacion=" + enRecuperacion +
-                ", cirugias=" + cirugias +
-                '}';
+    public List<Registro> getRegistros() {
+        return registros;
     }
+
+    public void setRegistros(List<Registro> registros) {
+        this.registros = registros;
+    }
+
 }
 
-class Cirugia {
-    private String tipo;
-    private String nombre;
+class RegistroCirugia {
+    @Id
+    private String id;
+
+    @Field("_id_cirugia")
+    private String idCirugia;
+
+    @Field("_id_tipo_cirugia")
+    private String _id_tipo_cirugia;
+    @Field("nombre_medico")
     private String nombreMedico;
     private String descripcion;
-
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
     @Field("fecha_cirugia")  // Mapea "fecha_cirugia" a "fechaCirugia"
     private Date fechaCirugia;
 
-    @Field("parametros_control")
-    private ParametrosControl parametrosControl;  // Información de los parámetros de control para esta cirugía
-
     // Getters y Setters
-    public String getTipo() {
-        return tipo;
+
+    public String getId() {
+        return id;
     }
 
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public String getNombre() {
-        return nombre;
+    public String getIdCirugia() {
+        return idCirugia;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public void setIdCirugia(String idCirugia) {
+        this.idCirugia = idCirugia;
+    }
+
+    public String get_id_tipo_cirugia() {
+        return _id_tipo_cirugia;
+    }
+
+    public void set_id_tipo_cirugia(String _id_tipo_cirugia) {
+        this._id_tipo_cirugia = _id_tipo_cirugia;
     }
 
     public String getNombreMedico() {
@@ -121,49 +124,32 @@ class Cirugia {
         this.fechaCirugia = fechaCirugia;
     }
 
-    public ParametrosControl getParametrosControl() {
-        return parametrosControl;
-    }
-
-    public void setParametrosControl(ParametrosControl parametrosControl) {
-        this.parametrosControl = parametrosControl;
-    }
-
-    @Override
-    public String toString() {
-        return "Cirugia{" +
-                "tipo='" + tipo + '\'' +
-                ", nombre='" + nombre + '\'' +
-                ", nombreMedico='" + nombreMedico + '\'' +
-                ", descripcion='" + descripcion + '\'' +
-                ", fechaCirugia=" + fechaCirugia +
-                ", parametrosControl=" + parametrosControl +
-                '}';
-    }
 }
 
 class ParametrosControl {
     @Field("signos_vitales")
-    private List<SignoVital> signosVitales;  // Lista de signos vitales registrados
-    private List<Sintoma> sintomas;  // Lista de síntomas registrados
+    private List<RegistroSignoVital> signosVitales;  // Lista de signos vitales registrados
+    @Field("sintomas")
+    private List<RegistroSintoma> sintomas;  // Lista de síntomas registrados
 
     @Field("sintomas_no_listados")
     private List<SintomaNoListados> sintomasNoListados;  // Sintomas no listados en el sistema
 
     // Getters y Setters
-    public List<SignoVital> getSignosVitales() {
+
+    public List<RegistroSignoVital> getSignosVitales() {
         return signosVitales;
     }
 
-    public void setSignosVitales(List<SignoVital> signosVitales) {
+    public void setSignosVitales(List<RegistroSignoVital> signosVitales) {
         this.signosVitales = signosVitales;
     }
 
-    public List<Sintoma> getSintomas() {
+    public List<RegistroSintoma> getSintomas() {
         return sintomas;
     }
 
-    public void setSintomas(List<Sintoma> sintomas) {
+    public void setSintomas(List<RegistroSintoma> sintomas) {
         this.sintomas = sintomas;
     }
 
@@ -175,27 +161,22 @@ class ParametrosControl {
         this.sintomasNoListados = sintomasNoListados;
     }
 
-    @Override
-    public String toString() {
-        return "ParametrosControl{" +
-                "signosVitales=" + signosVitales +
-                ", sintomas=" + sintomas +
-                ", sintomasNoListados=" + sintomasNoListados +
-                '}';
-    }
+
 }
 
-class SignoVital {
-    private int idSignoVital;
-    private String unidad;
-    private List<Registro> registros;  // Lista de registros del signo vital
 
+class RegistroSignoVital {
+    @Field("_id_signo_vital")
+    private String idSignoVital;
+    private String unidad;
+    private float valor;
     // Getters y Setters
-    public int getIdSignoVital() {
+
+    public String getIdSignoVital() {
         return idSignoVital;
     }
 
-    public void setIdSignoVital(int idSignoVital) {
+    public void setIdSignoVital(String idSignoVital) {
         this.idSignoVital = idSignoVital;
     }
 
@@ -207,58 +188,42 @@ class SignoVital {
         this.unidad = unidad;
     }
 
-    public List<Registro> getRegistros() {
-        return registros;
+    public float getValor() {
+        return valor;
     }
 
-    public void setRegistros(List<Registro> registros) {
-        this.registros = registros;
-    }
-
-    @Override
-    public String toString() {
-        return "SignoVital{" +
-                "idSignoVital=" + idSignoVital +
-                ", unidad='" + unidad + '\'' +
-                ", registros=" + registros +
-                '}';
+    public void setValor(float valor) {
+        this.valor = valor;
     }
 }
 
-class Sintoma {
-    private int idSintoma;
-    private List<Registro> registros;  // Lista de registros del síntoma
+class RegistroSintoma {
+    @Field("_id_sintoma")
+    private String idSintoma;
 
-    // Getters y Setters
-    public int getIdSintoma() {
+    @Field("_id_valor")
+    private String idValor;
+
+    public String getIdSintoma() {
         return idSintoma;
     }
 
-    public void setIdSintoma(int idSintoma) {
+    public void setIdSintoma(String idSintoma) {
         this.idSintoma = idSintoma;
     }
 
-    public List<Registro> getRegistros() {
-        return registros;
+    public String getIdValor() {
+        return idValor;
     }
 
-    public void setRegistros(List<Registro> registros) {
-        this.registros = registros;
-    }
-
-    @Override
-    public String toString() {
-        return "Sintoma{" +
-                "idSintoma=" + idSintoma +
-                ", registros=" + registros +
-                '}';
+    public void setIdValor(String idValor) {
+        this.idValor = idValor;
     }
 }
 
 class SintomaNoListados {
+    private String nombre;
     private String descripcion;
-    @Field("fecha_registro")
-    private Date fechaRegistro;
 
     // Getters y Setters
     public String getDescripcion() {
@@ -269,36 +234,22 @@ class SintomaNoListados {
         this.descripcion = descripcion;
     }
 
-    public Date getFechaRegistro() {
-        return fechaRegistro;
+    public String getNombre() {
+        return nombre;
     }
 
-    public void setFechaRegistro(Date fechaRegistro) {
-        this.fechaRegistro = fechaRegistro;
-    }
-
-    @Override
-    public String toString() {
-        return "SintomaNoListados{" +
-                "descripcion='" + descripcion + '\'' +
-                ", fechaRegistro=" + fechaRegistro +
-                '}';
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 }
 
 class Registro {
-    private Object valor;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
     @Field("fecha_registro")
     private Date fechaRegistro;
+    @Field("parametros_control")
+    private ParametrosControl parametrosControl;
 
-    // Getters y Setters
-    public Object getValor() {
-        return valor;
-    }
-
-    public void setValor(Object valor) {
-        this.valor = valor;
-    }
 
     public Date getFechaRegistro() {
         return fechaRegistro;
@@ -308,11 +259,13 @@ class Registro {
         this.fechaRegistro = fechaRegistro;
     }
 
-    @Override
-    public String toString() {
-        return "Registro{" +
-                "valor=" + valor +
-                ", fechaRegistro=" + fechaRegistro +
-                '}';
+    public ParametrosControl getParametrosControl() {
+        return parametrosControl;
+    }
+
+    public void setParametrosControl(ParametrosControl parametrosControl) {
+        this.parametrosControl = parametrosControl;
     }
 }
+
+
