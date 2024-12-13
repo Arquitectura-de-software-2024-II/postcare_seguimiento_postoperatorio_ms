@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class ParametroService {
@@ -33,6 +34,9 @@ public class ParametroService {
 
     // Agregar un nuevo signo vital a una versión de parámetros existente
     public Parametro agregarSignoVital(String idParametro, SignoVital signoVital) {
+        if (signoVital.getId() == null || signoVital.getId().isEmpty()) {
+            signoVital.setId(UUID.randomUUID().toString());
+        }
         Optional<Parametro> parametroOpt = parametroRepository.findById(idParametro);
         if (parametroOpt.isPresent()) {
             Parametro parametro = parametroOpt.get();
@@ -44,6 +48,9 @@ public class ParametroService {
 
     // Agregar un nuevo síntoma a una versión de parámetros existente
     public Parametro agregarSintoma(String idParametro, Sintoma sintoma) {
+        if (sintoma.getId() == null || sintoma.getId().isEmpty()) {
+            sintoma.setId(UUID.randomUUID().toString());
+        }
         Optional<Parametro> parametroOpt = parametroRepository.findById(idParametro);
         if (parametroOpt.isPresent()) {
             Parametro parametro = parametroOpt.get();
