@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  app:
+    image: seguimiento_postoperatorio_ms:latest
+    ports:
+      - "8081:8081"
+    environment:
+      - MONGO_URI=mongodb+srv://root:AAJJY52024-2@cluster0.ocbp0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+      - MONGO_DATABASE=postcare_seguimiento_postoperatorio_db
+      - SERVER_PORT=8081
+      - SPRING_APPLICATION_NAME=seguimiento_postoperatorio_ms
+    networks:
+      - backend
+networks:
+  backend:
+    driver: bridge
