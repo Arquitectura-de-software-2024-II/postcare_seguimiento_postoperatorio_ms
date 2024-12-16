@@ -4,7 +4,7 @@ WORKDIR /app
 
 ADD target/seguimiento_postoperatorio_ms-0.0.1-SNAPSHOT.jar app.jar
 
-COPY .env .env
+COPY .env /app/.env
 
 EXPOSE 8081
 
