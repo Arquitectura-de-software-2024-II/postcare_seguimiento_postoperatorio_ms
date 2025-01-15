@@ -10,9 +10,9 @@ import java.util.List;
 public class RegistroParametros {
 
     @Id
-    private String id;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    private String id;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     @Field("fecha_registro")
     private Date fechaRegistro;
     @Field("parametros_control")

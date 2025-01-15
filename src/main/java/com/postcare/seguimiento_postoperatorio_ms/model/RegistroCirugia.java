@@ -23,8 +23,7 @@ public class RegistroCirugia {
     @Field("id_cirugia")
     private String idCirugia;
 
-
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     @Field("fecha_cirugia")  // Mapea "fecha_cirugia" a "fechaCirugia"
     private Date fechaCirugia;
 

@@ -2,19 +2,22 @@ package com.postcare.seguimiento_postoperatorio_ms.controller;
 
 import com.postcare.seguimiento_postoperatorio_ms.model.*;
 import com.postcare.seguimiento_postoperatorio_ms.service.RegistroCirugiaService;
+import com.postcare.seguimiento_postoperatorio_ms.service.RegistroDePacienteService;
 import com.postcare.seguimiento_postoperatorio_ms.service.RegistroParametrosService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/pacientes/{idPaciente}")
+@RequestMapping("/api/pacientes")
 public class RegistroDePacienteController {
     @Autowired
     private RegistroCirugiaService registroCirugiaService;
@@ -22,6 +25,50 @@ public class RegistroDePacienteController {
     @Autowired
     private RegistroParametrosService registroParametrosService;
 
+    @Autowired
+    private RegistroDePacienteService registroDePacienteService;
+
+    @Operation(summary = "Crear un nuevo paciente (usuario)", description = "Este endpoint crea un nuevo paciente, que será tratado como un usuario con un ID único.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Paciente creado correctamente"),
+            @ApiResponse(responseCode = "400", description = "Solicitud incorrecta")
+    })
+    @PostMapping("/{idPaciente}")
+    public ResponseEntity<RegistroDePaciente> crearPaciente(@PathVariable String idPaciente) {
+        // Crear un nuevo paciente con el ID proporcionado o generado automáticamente
+        RegistroDePaciente nuevoPaciente = registroDePacienteService.crearPaciente(idPaciente);
+        return new ResponseEntity<>(nuevoPaciente, HttpStatus.CREATED);
+    }
+
+    @Operation(summary = "Obtener un paciente por ID", description = "Este endpoint permite obtener un paciente existente por su ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Paciente encontrado"),
+            @ApiResponse(responseCode = "404", description = "Paciente no encontrado")
+    })
+    @GetMapping("/{idPaciente}")
+    public ResponseEntity<RegistroDePaciente> obtenerPacientePorId(@PathVariable String idPaciente) {
+        return registroDePacienteService.obtenerPacientePorId(idPaciente)
+                .map(paciente -> new ResponseEntity<>(paciente, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    @PutMapping("/{idPaciente}/estado-recuperacion")
+    @Operation(summary = "Actualizar el estado de recuperación de un paciente", description = "Este endpoint permite actualizar el estado de recuperación de un paciente.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Estado de recuperación actualizado correctamente"),
+            @ApiResponse(responseCode = "404", description = "Paciente no encontrado")
+    })
+    public ResponseEntity<RegistroDePaciente> actualizarEstadoRecuperacion(
+            @PathVariable String idPaciente,
+            @RequestBody boolean enRecuperacion) {
+
+        try {
+            RegistroDePaciente pacienteActualizado = registroDePacienteService.actualizarEstadoRecuperacion(idPaciente, enRecuperacion);
+            return new ResponseEntity<>(pacienteActualizado, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
     // CRUD de Cirugías
 
     @GetMapping("/test")
@@ -35,7 +82,7 @@ public class RegistroDePacienteController {
             @ApiResponse(responseCode = "201", description = "Cirugía creada correctamente"),
             @ApiResponse(responseCode = "400", description = "Solicitud incorrecta")
     })
-    @PostMapping("/cirugias")
+    @PostMapping("/{idPaciente}/cirugias")
     public ResponseEntity<RegistroDePaciente> crearCirugia(@PathVariable String idPaciente, @RequestBody RegistroCirugia registroCirugia) {
         RegistroDePaciente paciente = registroCirugiaService.crearCirugia(idPaciente, registroCirugia);
         return new ResponseEntity<>(paciente, HttpStatus.CREATED);
@@ -45,7 +92,7 @@ public class RegistroDePacienteController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de cirugías obtenida correctamente")
     })
-    @GetMapping("/cirugias")
+    @GetMapping("/{idPaciente}/cirugias")
     public ResponseEntity<List<RegistroCirugia>> obtenerCirugias(@PathVariable String idPaciente) {
         List<RegistroCirugia> cirugias = registroCirugiaService.obtenerCirugias(idPaciente);
         return new ResponseEntity<>(cirugias, HttpStatus.OK);
@@ -56,10 +103,11 @@ public class RegistroDePacienteController {
             @ApiResponse(responseCode = "200", description = "Cirugía obtenida correctamente"),
             @ApiResponse(responseCode = "404", description = "Cirugía no encontrada")
     })
-    @GetMapping("/cirugias/{idCirugia}")
+    @GetMapping("/{idPaciente}/cirugias/{idCirugia}")
     public ResponseEntity<RegistroCirugia> obtenerCirugiaPorId(@PathVariable String idPaciente, @PathVariable String idCirugia) {
-        RegistroCirugia cirugia = registroCirugiaService.obtenerCirugiaPorId(idPaciente, idCirugia);
-        return new ResponseEntity<>(cirugia, HttpStatus.OK);
+        Optional<RegistroCirugia> cirugiaOpt = registroCirugiaService.obtenerCirugiaPorId(idPaciente, idCirugia);
+        return cirugiaOpt.map(cirugia -> new ResponseEntity<>(cirugia, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @Operation(summary = "Actualizar una cirugía de un paciente")
@@ -67,10 +115,11 @@ public class RegistroDePacienteController {
             @ApiResponse(responseCode = "200", description = "Cirugía actualizada correctamente"),
             @ApiResponse(responseCode = "404", description = "Cirugía no encontrada")
     })
-    @PutMapping("/cirugias/{idCirugia}")
+    @PutMapping("/{idPaciente}/cirugias/{idCirugia}")
     public ResponseEntity<RegistroCirugia> actualizarCirugia(@PathVariable String idPaciente, @PathVariable String idCirugia, @RequestBody RegistroCirugia registroCirugia) {
-        RegistroCirugia cirugiaActualizada = registroCirugiaService.actualizarCirugia(idPaciente, idCirugia, registroCirugia);
-        return new ResponseEntity<>(cirugiaActualizada, HttpStatus.OK);
+        Optional<RegistroCirugia> cirugiaOpt = registroCirugiaService.actualizarCirugia(idPaciente, idCirugia, registroCirugia);
+        return cirugiaOpt.map(cirugia -> new ResponseEntity<>(cirugia, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @Operation(summary = "Eliminar una cirugía de un paciente")
@@ -78,10 +127,11 @@ public class RegistroDePacienteController {
             @ApiResponse(responseCode = "204", description = "Cirugía eliminada correctamente"),
             @ApiResponse(responseCode = "404", description = "Cirugía no encontrada")
     })
-    @DeleteMapping("/cirugias/{idCirugia}")
+    @DeleteMapping("/{idPaciente}/cirugias/{idCirugia}")
     public ResponseEntity<Void> eliminarCirugia(@PathVariable String idPaciente, @PathVariable String idCirugia) {
-        registroCirugiaService.eliminarCirugia(idPaciente, idCirugia);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        boolean eliminado = registroCirugiaService.eliminarCirugia(idPaciente, idCirugia);
+        return eliminado ? new ResponseEntity<>(HttpStatus.NO_CONTENT)
+                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     // CRUD de Registros de Parámetros (signos vitales y síntomas)
@@ -91,17 +141,18 @@ public class RegistroDePacienteController {
             @ApiResponse(responseCode = "201", description = "Registro creado correctamente"),
             @ApiResponse(responseCode = "400", description = "Solicitud incorrecta")
     })
-    @PostMapping("/registros")
+    @PostMapping("/{idPaciente}/registros")
     public ResponseEntity<RegistroParametros> crearRegistroParametros(@PathVariable String idPaciente, @RequestBody RegistroParametros registro) {
-        RegistroParametros nuevoRegistro = registroParametrosService.crearRegistroParametros(idPaciente, registro);
-        return new ResponseEntity<>(nuevoRegistro, HttpStatus.CREATED);
+        Optional<RegistroParametros> nuevoRegistroOpt = registroParametrosService.crearRegistroParametros(idPaciente, registro);
+        return nuevoRegistroOpt.map(nuevoRegistro -> new ResponseEntity<>(nuevoRegistro, HttpStatus.CREATED))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.BAD_REQUEST));
     }
 
     @Operation(summary = "Obtener todos los registros de parámetros de un paciente")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de registros obtenida correctamente")
     })
-    @GetMapping("/registros")
+    @GetMapping("/{idPaciente}/registros")
     public ResponseEntity<List<RegistroParametros>> obtenerRegistrosParametros(@PathVariable String idPaciente) {
         List<RegistroParametros> registros = registroParametrosService.obtenerRegistrosParametros(idPaciente);
         return new ResponseEntity<>(registros, HttpStatus.OK);
@@ -112,10 +163,11 @@ public class RegistroDePacienteController {
             @ApiResponse(responseCode = "200", description = "Registro obtenido correctamente"),
             @ApiResponse(responseCode = "404", description = "Registro no encontrado")
     })
-    @GetMapping("/registros/{idRegistro}")
+    @GetMapping("/{idPaciente}/registros/{idRegistro}")
     public ResponseEntity<RegistroParametros> obtenerRegistroParametro(@PathVariable String idPaciente, @PathVariable String idRegistro) {
-        RegistroParametros registro = registroParametrosService.obtenerRegistroParametroPorId(idPaciente, idRegistro);
-        return new ResponseEntity<>(registro, HttpStatus.OK);
+        Optional<RegistroParametros> registroOpt = registroParametrosService.obtenerRegistroParametroPorId(idPaciente, idRegistro);
+        return registroOpt.map(registro -> new ResponseEntity<>(registro, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @Operation(summary = "Actualizar un registro de parámetros de un paciente")
@@ -123,10 +175,11 @@ public class RegistroDePacienteController {
             @ApiResponse(responseCode = "200", description = "Registro actualizado correctamente"),
             @ApiResponse(responseCode = "404", description = "Registro no encontrado")
     })
-    @PutMapping("/registros/{idRegistro}")
+    @PutMapping("/{idPaciente}/registros/{idRegistro}")
     public ResponseEntity<RegistroParametros> actualizarRegistroParametros(@PathVariable String idPaciente, @PathVariable String idRegistro, @RequestBody RegistroParametros registro) {
-        RegistroParametros registroActualizado = registroParametrosService.actualizarRegistroParametros(idPaciente, idRegistro, registro);
-        return new ResponseEntity<>(registroActualizado, HttpStatus.OK);
+        Optional<RegistroParametros> registroOpt = registroParametrosService.actualizarRegistroParametros(idPaciente, idRegistro, registro);
+        return registroOpt.map(registroActualizado -> new ResponseEntity<>(registroActualizado, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @Operation(summary = "Eliminar un registro de parámetros de un paciente")
@@ -134,9 +187,10 @@ public class RegistroDePacienteController {
             @ApiResponse(responseCode = "204", description = "Registro eliminado correctamente"),
             @ApiResponse(responseCode = "404", description = "Registro no encontrado")
     })
-    @DeleteMapping("/registros/{idRegistro}")
+    @DeleteMapping("/{idPaciente}/registros/{idRegistro}")
     public ResponseEntity<Void> eliminarRegistroParametros(@PathVariable String idPaciente, @PathVariable String idRegistro) {
-        registroParametrosService.eliminarRegistroParametros(idPaciente, idRegistro);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        boolean eliminado = registroParametrosService.eliminarRegistroParametros(idPaciente, idRegistro);
+        return eliminado ? new ResponseEntity<>(HttpStatus.NO_CONTENT)
+                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 }

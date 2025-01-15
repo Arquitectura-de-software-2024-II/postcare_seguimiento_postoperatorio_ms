@@ -25,7 +25,7 @@ public class RegistroCirugiaService {
                     nuevoPaciente.setId(idPaciente);
                     return nuevoPaciente;
                 });
-        // Verificar si existe el arreglo de cirugias
+
         if (paciente.getCirugias() == null) {
             paciente.setCirugias(new ArrayList<>());
         }
@@ -39,54 +39,71 @@ public class RegistroCirugiaService {
 
     // Obtener todas las cirugías de un paciente
     public List<RegistroCirugia> obtenerCirugias(String idPaciente) {
-        RegistroDePaciente paciente = pacienteRepository.findById(idPaciente)
-                .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
-        return paciente.getCirugias();
+        RegistroDePaciente paciente = pacienteRepository.findById(idPaciente).orElse(null);
+
+        // Retornar lista vacía si no se encuentra el paciente
+        return paciente != null ? paciente.getCirugias() : new ArrayList<>();
     }
 
     // Obtener una cirugía específica de un paciente
-    public RegistroCirugia obtenerCirugiaPorId(String idPaciente, String idCirugia) {
-        RegistroDePaciente paciente = pacienteRepository.findById(idPaciente)
-                .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
-        return paciente.getCirugias().stream()
-                .filter(cirugia -> cirugia.getId().equals(idCirugia))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Cirugía no encontrada"));
+    public Optional<RegistroCirugia> obtenerCirugiaPorId(String idPaciente, String idCirugia) {
+        RegistroDePaciente paciente = pacienteRepository.findById(idPaciente).orElse(null);
+
+        // Si no se encuentra el paciente, retornamos Optional vacío
+        if (paciente != null) {
+            return paciente.getCirugias().stream()
+                    .filter(cirugia -> cirugia.getId().equals(idCirugia))
+                    .findFirst();  // Optional.empty() si no se encuentra la cirugía
+        }
+        return Optional.empty();  // Retornamos Optional vacío si no se encuentra el paciente
     }
 
     // Actualizar una cirugía de un paciente
-    public RegistroCirugia actualizarCirugia(String idPaciente, String idCirugia, RegistroCirugia cirugiaActualizada) {
-        RegistroDePaciente paciente = pacienteRepository.findById(idPaciente)
-                .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
+    public Optional<RegistroCirugia> actualizarCirugia(String idPaciente, String idCirugia, RegistroCirugia cirugiaActualizada) {
+        RegistroDePaciente paciente = pacienteRepository.findById(idPaciente).orElse(null);
 
-        RegistroCirugia cirugiaExistente = paciente.getCirugias().stream()
-                .filter(cirugia -> cirugia.getId().equals(idCirugia))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Cirugía no encontrada"));
+        if (paciente != null) {
+            // Buscar la cirugía existente
+            RegistroCirugia cirugiaExistente = paciente.getCirugias().stream()
+                    .filter(cirugia -> cirugia.getId().equals(idCirugia))
+                    .findFirst()
+                    .orElse(null);  // Si no se encuentra la cirugía, retorna null
 
-        // Actualizar la cirugía
-        cirugiaExistente.setNombreCirugia(cirugiaActualizada.getNombreCirugia());
-        cirugiaExistente.setIdCirugia(cirugiaActualizada.getIdCirugia());
-        cirugiaExistente.setNombreMedico(cirugiaActualizada.getNombreMedico());
-        cirugiaExistente.setDescripcion(cirugiaActualizada.getDescripcion());
-        cirugiaExistente.setFechaCirugia(cirugiaActualizada.getFechaCirugia());
-        cirugiaExistente.setTipoCirugia(cirugiaActualizada.getTipoCirugia());
+            if (cirugiaExistente != null) {
+                // Actualizar la cirugía
+                cirugiaExistente.setNombreCirugia(cirugiaActualizada.getNombreCirugia());
+                cirugiaExistente.setIdCirugia(cirugiaActualizada.getIdCirugia());
+                cirugiaExistente.setNombreMedico(cirugiaActualizada.getNombreMedico());
+                cirugiaExistente.setDescripcion(cirugiaActualizada.getDescripcion());
+                cirugiaExistente.setFechaCirugia(cirugiaActualizada.getFechaCirugia());
+                cirugiaExistente.setTipoCirugia(cirugiaActualizada.getTipoCirugia());
 
-        pacienteRepository.save(paciente);
-        return cirugiaExistente;
+                pacienteRepository.save(paciente);
+                return Optional.of(cirugiaExistente);  // Retornamos la cirugía actualizada
+            }
+        }
+
+        return Optional.empty();  // Retornamos Optional vacío si no se encuentra el paciente o la cirugía
     }
 
     // Eliminar una cirugía de un paciente
-    public void eliminarCirugia(String idPaciente, String idCirugia) {
-        RegistroDePaciente paciente = pacienteRepository.findById(idPaciente)
-                .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
+    public boolean eliminarCirugia(String idPaciente, String idCirugia) {
+        RegistroDePaciente paciente = pacienteRepository.findById(idPaciente).orElse(null);
 
-        RegistroCirugia cirugiaExistente = paciente.getCirugias().stream()
-                .filter(cirugia -> cirugia.getId().equals(idCirugia))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Cirugía no encontrada"));
+        if (paciente != null) {
+            // Buscar la cirugía en el listado del paciente
+            RegistroCirugia cirugiaExistente = paciente.getCirugias().stream()
+                    .filter(cirugia -> cirugia.getId().equals(idCirugia))
+                    .findFirst()
+                    .orElse(null);  // Si no se encuentra la cirugía, retorna null
 
-        paciente.getCirugias().remove(cirugiaExistente);
-        pacienteRepository.save(paciente);
+            if (cirugiaExistente != null) {
+                paciente.getCirugias().remove(cirugiaExistente);
+                pacienteRepository.save(paciente);
+                return true;  // Cirugía eliminada exitosamente
+            }
+        }
+
+        return false;  // Retornamos false si no se encuentra la cirugía
     }
 }

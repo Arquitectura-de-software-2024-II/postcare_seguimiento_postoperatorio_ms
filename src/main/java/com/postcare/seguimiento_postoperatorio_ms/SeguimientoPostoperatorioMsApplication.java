@@ -17,12 +17,6 @@ SeguimientoPostoperatorioMsApplication {
 		String serverPort = dotenv.get("SERVER_PORT");
 		String appName = dotenv.get("SPRING_APPLICATION_NAME");
 
-		// Imprimir para verificar
-		System.out.println("MONGO_URI: " + mongoUri);
-		System.out.println("MONGO_DATABASE: " + mongoDatabase);
-		System.out.println("SERVER_PORT: " + serverPort);
-		System.out.println("SPRING_APPLICATION_NAME: " + appName);
-
 		// Establecer las propiedades de sistema
 		System.setProperty("MONGO_URI", mongoUri);
 		System.setProperty("MONGO_DATABASE", mongoDatabase);

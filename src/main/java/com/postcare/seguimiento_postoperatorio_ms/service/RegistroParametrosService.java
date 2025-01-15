@@ -6,7 +6,6 @@ import com.postcare.seguimiento_postoperatorio_ms.repository.RegistroDePacienteR
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,78 +16,99 @@ public class RegistroParametrosService {
     @Autowired
     private RegistroDePacienteRepository pacienteRepository;
 
-    // Crear un nuevo registro de parámetros (signos vitales y síntomas) para un paciente
-    public RegistroParametros crearRegistroParametros(String idPaciente, RegistroParametros registro) {
-        // Obtener el paciente
-        RegistroDePaciente paciente = pacienteRepository.findById(idPaciente)
-                .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
 
-        if (paciente.getRegistros() == null) {
-            paciente.setRegistros(new ArrayList<>());
+    // Crear un nuevo registro de parámetros (signos vitales y síntomas) para un paciente
+    public Optional<RegistroParametros> crearRegistroParametros(String idPaciente, RegistroParametros registro) {
+        Optional<RegistroDePaciente> pacienteOpt = Optional.ofNullable(pacienteRepository.findById(idPaciente).orElse(null));
+
+        if (pacienteOpt.isEmpty()) {
+            return Optional.empty();  // El paciente no existe
         }
+
+        RegistroDePaciente paciente = pacienteOpt.get();
+        if (paciente.getRegistros() == null) {
+            paciente.setRegistros(List.of());  // Inicializa la lista de registros si es nula
+        }
+
+        // Asignar un ID único al registro si no tiene uno
         if (registro.getId() == null || registro.getId().isEmpty()) {
             registro.setId(UUID.randomUUID().toString());
         }
-        // Agregar el nuevo registro de parámetros
-        paciente.getRegistros().add(registro);
 
-        // Guardar el paciente con el nuevo registro
+        paciente.getRegistros().add(registro);
         pacienteRepository.save(paciente);
 
-        return registro;
+        return Optional.of(registro);
     }
 
     // Obtener todos los registros de parámetros de un paciente
     public List<RegistroParametros> obtenerRegistrosParametros(String idPaciente) {
-        RegistroDePaciente paciente = pacienteRepository.findById(idPaciente)
-                .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
+        Optional<RegistroDePaciente> pacienteOpt = Optional.ofNullable(pacienteRepository.findById(idPaciente).orElse(null));
 
-        return paciente.getRegistros();
+        if (pacienteOpt.isEmpty() || pacienteOpt.get().getRegistros() == null) {
+            return List.of();
+        }
+
+        return pacienteOpt.get().getRegistros();
     }
 
     // Obtener un registro de parámetros específico de un paciente
-    public RegistroParametros obtenerRegistroParametroPorId(String idPaciente, String idRegistro) {
-        RegistroDePaciente paciente = pacienteRepository.findById(idPaciente)
-                .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
+    public Optional<RegistroParametros> obtenerRegistroParametroPorId(String idPaciente, String idRegistro) {
+        Optional<RegistroDePaciente> pacienteOpt = Optional.ofNullable(pacienteRepository.findById(idPaciente).orElse(null));
 
-        return paciente.getRegistros().stream()
-                .filter(registro -> registro.getFechaRegistro().toString().equals(idRegistro))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Registro no encontrado"));
+        if (pacienteOpt.isEmpty() || pacienteOpt.get().getRegistros() == null) {
+            return Optional.empty();  // No se encuentra el paciente o no tiene registros
+        }
+
+        return pacienteOpt.get().getRegistros().stream()
+                .filter(registro -> registro.getId().equals(idRegistro))
+                .findFirst();
     }
 
     // Actualizar un registro de parámetros de un paciente
-    public RegistroParametros actualizarRegistroParametros(String idPaciente, String idRegistro, RegistroParametros registroActualizado) {
-        // Buscar el paciente por id
-        RegistroDePaciente paciente = pacienteRepository.findById(idPaciente)
-                .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
+    public Optional<RegistroParametros> actualizarRegistroParametros(String idPaciente, String idRegistro, RegistroParametros registroActualizado) {
+        Optional<RegistroDePaciente> pacienteOpt = Optional.ofNullable(pacienteRepository.findById(idPaciente).orElse(null));
 
-        RegistroParametros registroExistente = paciente.getRegistros().stream()
+        if (pacienteOpt.isEmpty() || pacienteOpt.get().getRegistros() == null) {
+            return Optional.empty();  // No se encuentra el paciente o no tiene registros
+        }
+
+        RegistroDePaciente paciente = pacienteOpt.get();
+        Optional<RegistroParametros> registroExistenteOpt = paciente.getRegistros().stream()
                 .filter(registro -> registro.getId().equals(idRegistro))  // Comparar por ID del registro
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Registro no encontrado"));
+                .findFirst();
 
+        if (registroExistenteOpt.isEmpty()) {
+            return Optional.empty();  // No se encuentra el registro
+        }
+
+        RegistroParametros registroExistente = registroExistenteOpt.get();
         registroExistente.setParametrosControl(registroActualizado.getParametrosControl());
 
         pacienteRepository.save(paciente);
-
-        return registroExistente;
+        return Optional.of(registroExistente);  // Retornar el registro actualizado
     }
-
 
     // Eliminar un registro de parámetros de un paciente
-    public void eliminarRegistroParametros(String idPaciente, String idRegistro) {
-        RegistroDePaciente paciente = pacienteRepository.findById(idPaciente)
-                .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
+    public boolean eliminarRegistroParametros(String idPaciente, String idRegistro) {
+        Optional<RegistroDePaciente> pacienteOpt = Optional.ofNullable(pacienteRepository.findById(idPaciente).orElse(null));
 
-        RegistroParametros registroExistente = paciente.getRegistros().stream()
-                .filter(registro -> registro.getId().equals(idRegistro))  // Comparar por ID del registro
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Registro no encontrado"));
+        if (pacienteOpt.isEmpty() || pacienteOpt.get().getRegistros() == null) {
+            return false;  // No se encuentra el paciente o no tiene registros
+        }
 
-        paciente.getRegistros().remove(registroExistente);
+        RegistroDePaciente paciente = pacienteOpt.get();
+        List<RegistroParametros> registros = paciente.getRegistros();
+        Optional<RegistroParametros> registroExistenteOpt = registros.stream()
+                .filter(registro -> registro.getId().equals(idRegistro))
+                .findFirst();
 
+        if (registroExistenteOpt.isEmpty()) {
+            return false;  // No se encuentra el registro
+        }
+
+        registros.remove(registroExistenteOpt.get());
         pacienteRepository.save(paciente);
+        return true;  // Registro eliminado con éxito
     }
-
 }
