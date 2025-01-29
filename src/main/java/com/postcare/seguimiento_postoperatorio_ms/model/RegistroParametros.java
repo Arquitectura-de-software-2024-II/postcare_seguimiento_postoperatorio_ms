@@ -4,8 +4,10 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RegistroParametros {
 
@@ -40,6 +42,30 @@ public class RegistroParametros {
 
     public void setParametrosControl(ParametrosControl parametrosControl) {
         this.parametrosControl = parametrosControl;
+    }
+
+    public List<String> getSintomas() {
+        List<String> listaSintomas = new ArrayList<>();
+
+        // Agregar sintomas predefinidos
+        if (this.parametrosControl != null && this.parametrosControl.getSintomas() != null) {
+            listaSintomas.addAll(
+                    this.parametrosControl.getSintomas().stream()
+                            .map(sintoma -> sintoma.getNombre() + ": " + sintoma.getValor())
+                            .collect(Collectors.toList())
+            );
+        }
+
+        // Agregar sintomas no listados
+        if (this.parametrosControl != null && this.parametrosControl.getSintomasNoListados() != null) {
+            listaSintomas.addAll(
+                    this.parametrosControl.getSintomasNoListados().stream()
+                            .map(sintoma -> sintoma.getNombre() + ": " + sintoma.getDescripcion())
+                            .collect(Collectors.toList())
+            );
+        }
+
+        return listaSintomas;
     }
 }
 

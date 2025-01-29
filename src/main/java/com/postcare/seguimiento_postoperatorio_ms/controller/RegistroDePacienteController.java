@@ -7,6 +7,7 @@ import com.postcare.seguimiento_postoperatorio_ms.service.RegistroParametrosServ
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -142,8 +143,14 @@ public class RegistroDePacienteController {
             @ApiResponse(responseCode = "400", description = "Solicitud incorrecta")
     })
     @PostMapping("/{idPaciente}/registros")
-    public ResponseEntity<RegistroParametros> crearRegistroParametros(@PathVariable String idPaciente, @RequestBody RegistroParametros registro) {
-        Optional<RegistroParametros> nuevoRegistroOpt = registroParametrosService.crearRegistroParametros(idPaciente, registro);
+    public ResponseEntity<RegistroParametros> crearRegistroParametros(
+            @PathVariable String idPaciente,
+            @RequestBody RegistroParametros registro,
+            HttpServletRequest request) {
+
+        // Obtener todas las cookies
+        String cookies = request.getHeader("Cookie");
+        Optional<RegistroParametros> nuevoRegistroOpt = registroParametrosService.crearRegistroParametros(idPaciente, registro, cookies);
         return nuevoRegistroOpt.map(nuevoRegistro -> new ResponseEntity<>(nuevoRegistro, HttpStatus.CREATED))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.BAD_REQUEST));
     }

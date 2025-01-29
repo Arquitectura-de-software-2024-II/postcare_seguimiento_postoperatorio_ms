@@ -1,14 +1,13 @@
 package com.postcare.seguimiento_postoperatorio_ms.service;
 
+import com.postcare.seguimiento_postoperatorio_ms.model.RegistroCirugia;
 import com.postcare.seguimiento_postoperatorio_ms.model.RegistroParametros;
 import com.postcare.seguimiento_postoperatorio_ms.model.RegistroDePaciente;
 import com.postcare.seguimiento_postoperatorio_ms.repository.RegistroDePacienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class RegistroParametrosService {
@@ -16,9 +15,14 @@ public class RegistroParametrosService {
     @Autowired
     private RegistroDePacienteRepository pacienteRepository;
 
+    @Autowired
+    private RegistroCirugiaService registroCirugiaService;
+
+    @Autowired
+    private GatewayClient gatewayClient;
 
     // Crear un nuevo registro de parámetros (signos vitales y síntomas) para un paciente
-    public Optional<RegistroParametros> crearRegistroParametros(String idPaciente, RegistroParametros registro) {
+    public Optional<RegistroParametros> crearRegistroParametros(String idPaciente, RegistroParametros registro, String cookies) {
         Optional<RegistroDePaciente> pacienteOpt = Optional.ofNullable(pacienteRepository.findById(idPaciente).orElse(null));
 
         if (pacienteOpt.isEmpty()) {
@@ -27,16 +31,20 @@ public class RegistroParametrosService {
 
         RegistroDePaciente paciente = pacienteOpt.get();
         if (paciente.getRegistros() == null) {
-            paciente.setRegistros(List.of());  // Inicializa la lista de registros si es nula
+            paciente.setRegistros(new ArrayList<>());
         }
 
         // Asignar un ID único al registro si no tiene uno
         if (registro.getId() == null || registro.getId().isEmpty()) {
             registro.setId(UUID.randomUUID().toString());
         }
-
         paciente.getRegistros().add(registro);
         pacienteRepository.save(paciente);
+
+        List<RegistroCirugia> cirugias = registroCirugiaService.obtenerCirugias(idPaciente);
+        String operacion = cirugias.isEmpty() ? "sin_operacion" : cirugias.get(0).getNombreCirugia();
+        String diagnostico = gatewayClient.enviarSintomas(registro.getSintomas(), operacion);
+        String prioridad = gatewayClient.actualizarTriage(diagnostico, idPaciente, cookies);
 
         return Optional.of(registro);
     }
